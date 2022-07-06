@@ -1,4 +1,4 @@
-from interface import ModelInterface
+from pipeline.model_pipeline.interface import ModelInterface
 
 class NaiveInterface(ModelInterface):
 	def __init__(self):

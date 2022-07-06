@@ -1,3 +1,5 @@
+import re
+
 class Transformer():
 	def __init__(self, stopwords=[]):
 		self.stopwords = stopwords
@@ -17,7 +19,7 @@ class Transformer():
 			sentence = re.sub('[^a-zA-Z0-9]', ' ', sentence)
 			sentence = re.sub(r"\s+[a-zA-Z]\s+", ' ', sentence)
 			sentence = re.sub(r'\s+', ' ', sentence)
-			sentence = " ".join([word for word in sentence if word not in self.stopwords])
+			sentence = " ".join([word for word in sentence.split(' ') if word not in self.stopwords])
 			new_text.append(sentence)
 		data["comment_text"] = new_text
 		return data
