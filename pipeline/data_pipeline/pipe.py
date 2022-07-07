@@ -6,15 +6,13 @@ from pipeline.data_pipeline.constants import SIGNIFICANT_INDICES
 import pandas as pd
 
 class DataPipeline():
-	def __init__(self, read_dir="", save_dir="", stopwords=[]):
-		self.extractor = Extractor(read_dir)
-		self.transformer = Transformer(stopwords)
-		self.loader = Loader(save_dir)
+	def __init__(self, extractor=None, transformer=None, loader=None, read_dir="", save_dir="", stopwords=[]):
+		self.extractor = Extractor(read_dir) if not extractor else extractor
+		self.transformer = Transformer(stopwords) if not transformer else transformer
+		self.loader = Loader(save_dir) if not loader else loader
 
 	def parse(self, filepaths, target_filepath):
 		data = pd.DataFrame(columns=SIGNIFICANT_INDICES)
-		comments = []
-		codes = []
 		for filepath in filepaths:
 			self.extractor.load(filepath)
 			local_data = self.transformer.transform(self.extractor.dump())
