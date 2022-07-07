@@ -11,7 +11,5 @@ class Extractor():
 		else:
 			self.data = pd.read_excel(f"{self.parent_directory}/{filepath}")
 
-		self.data = self.data[["comment_text", "comment_code_value"]]
-
 	def dump(self):
 		return self.data.copy()
