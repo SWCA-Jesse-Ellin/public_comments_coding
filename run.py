@@ -18,7 +18,7 @@ data_pipe.parse(os.listdir(INPUT_PATH), OUTPUT_FILE)
 
 data = pd.read_csv(f"{ETL_PATH}/{OUTPUT_FILE}")
 
-model = NaiveInterface()
-print(model.predict(data["comment_text"], Y=data["comment_code_value"]))
+# model = NaiveInterface()
+# print(model.predict(data["comment_text"], Y=data["comment_code_value"]))
 
-print(data.head())
+print(data.describe())

@@ -22,6 +22,8 @@ class Transformer():
 			sentence = " ".join([word for word in sentence.split(' ') if word not in self.stopwords])
 			new_text.append(sentence)
 		data["comment_text"] = new_text
+		data["original_text"] = old_text
+		data["significance"] = [True for _ in old_text]
 		return data
 
 	def transform(self, data):
