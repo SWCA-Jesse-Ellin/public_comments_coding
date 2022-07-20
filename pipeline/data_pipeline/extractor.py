@@ -7,12 +7,9 @@ class Extractor():
 
 	def load(self, filepath, indices=[]):
 		if filepath.split('.')[-1] == "csv":
-			self.data = pd.read_csv(f"{self.parent_directory}/{filepath}")
+			self.data = pd.read_csv(filepath, encoding_errors='ignore')
 		else:
-			self.data = pd.read_excel(f"{self.parent_directory}/{filepath}")
-
-		if indices:
-			self.data = self.data[indices]
-
+			self.data = pd.read_excel(filepath)
+      
 	def dump(self):
 		return self.data.copy()
