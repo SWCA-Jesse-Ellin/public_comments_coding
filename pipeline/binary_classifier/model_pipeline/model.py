@@ -11,6 +11,7 @@ class BinaryModel():
 			self.generate_model(loss)
 		else:
 			self.model = keras.models.load_model(load_file)
+			self.model.compile(optimizer='adam', loss=self.custom_loss(), metrics=['accuracy', tf.keras.metrics.Recall(name="recall")], run_eagerly=True)
 
 	def generate_model(self, loss="custom"):
 		if loss=="custom":
@@ -69,8 +70,11 @@ class BinaryModel():
 	def to_binary(self, Y, threshold=0.5):
 		return np.array([True if y[0] >= threshold else False for y in Y])
 
-	def predict(self, x, threshold=0.5):
-		return self.to_binary(self.model.predict(x), threshold=threshold)
+	def predict(self, x, binarize=False, threshold=0.5):
+		res = self.model.predict(x)
+		if binarize:
+			return self.to_binary(res, threshold=threshold)
+		return res
 
 	def save(self, filepath):
 		return self.model.save(filepath)

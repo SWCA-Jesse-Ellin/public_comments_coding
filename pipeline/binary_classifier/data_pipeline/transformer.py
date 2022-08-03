@@ -98,27 +98,39 @@ class BinaryTransformer(Transformer):
 		dbs = labeled_data["database_name"].tolist()
 		nums = labeled_data["letter_num"].tolist()
 
-		for i in tqdm(range(len(texts))):
-			original_text = o_text[i]
-			db = dbs[i]
-			letter = nums[i]
+		if texts:
+			for i in tqdm(range(len(texts))):
+				original_text = o_text[i]
+				db = dbs[i]
+				letter = nums[i]
 
-			blank_data[db][letter].replace(original_text, '')
+				blank_data[db][letter].replace(original_text, '')
 
-		for i in tqdm(range(len(texts))):
-			original_text = o_text[i]
-			db = dbs[i]
-			letter = nums[i]
+			for i in tqdm(range(len(texts))):
+				original_text = o_text[i]
+				db = dbs[i]
+				letter = nums[i]
 
-			doc_text = [entry.strip() for entry in blank_data[db][letter].split('.')]
-			for entry in doc_text:
-				if original_text in entry:
-					continue
-				o_text.append(entry)
-				texts.append(self.process_text(entry).strip().lower())
-				sig.append(False)
-				dbs.append(db)
-				nums.append(letter)
+				doc_text = [entry.strip() for entry in blank_data[db][letter].split('.')]
+				for entry in doc_text:
+					if original_text in entry:
+						continue
+					o_text.append(entry)
+					texts.append(self.process_text(entry).strip().lower())
+					sig.append(False)
+					dbs.append(db)
+					nums.append(letter)
+
+		else:
+			for db in tqdm(blank_data.keys()):
+				for letter_num in tqdm(blank_data[db].keys(), leave=False):
+					doc_text = [entry.strip() for entry in blank_data[db][letter_num].split('.')]
+					for entry in tqdm(doc_text, leave=False):
+						o_text.append(entry)
+						texts.append(self.process_text(entry).strip().lower())
+						sig.append(False)
+						dbs.append(db)
+						nums.append(letter_num)
 
 		return self.removeBlanks(pd.DataFrame({
 					"comment_text" : texts,
