@@ -28,3 +28,4 @@ TEXT_REPLACEMENT = {
 	"{comma}" : ",",
 	"{cr}{lf}" : "\r\n",
 }
+PUNCTUATION_SPLITTERS = '[.!?]'

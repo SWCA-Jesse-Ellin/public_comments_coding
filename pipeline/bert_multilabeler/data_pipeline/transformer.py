@@ -5,11 +5,14 @@ from pipeline.bert_multilabeler.constants import INSIGNIFICANT_CODE
 import re
 import pandas as pd
 from tqdm import tqdm
+from sklearn.preprocessing import OneHotEncoder, LabelBinarizer
+from sklearn.semi_supervised import LabelSpreading
 
 class BERTTransformer(Transformer):
-	def __init__(self, stopwords=[], sep='.'):
+	def __init__(self, stopwords=[], sep='.', spread=False):
 		super(BERTTransformer, self).__init__(stopwords)
 		self.sep = sep
+		self.spread = spread
 
 	def removeBlanks(self, data):
 		filter = data["comment_text"] != ''
@@ -32,11 +35,20 @@ class BERTTransformer(Transformer):
 		data["original_text"] = old_text
 		return data
 
+	def spreadLabels(self, df, f=BAD_LABEL_LAMBDA):
+		df = df.copy()
+		labels = df["parent_code"].tolist()
+		labels = [item if not re.search(r'[a-z0-9.\s]', item) else '' for item in labels]
+		df["spread_codes"] = labels
+		spreader = LabelSpreading()
+
 	def transform(self, data):
 		data = data.copy()
 		data = self.removeBlanks(data)
 		data = self.preprocess(data)
 		data = self.removeBlanks(data)
+		if self.spread:
+			return self.spreadLabels(data)
 		return data
 
 	def restructureBlanks(self, blank_data):
@@ -91,12 +103,47 @@ class BERTTransformer(Transformer):
 			letter = kwargs["nums"][i]
 
 			doc_text = [entry.strip() for entry in re.split(PUNCTUATION_SPLITTERS, letter_data[db][letter])]
+			for entry in doc_text:
+				if original_text in entry:
+					continue
+				kwargs["o_text"].append(entry)
+				kwargs["texts"].append(self.process_text(entry))
+				kwargs["codes"].append(INSIGNIFICANT_CODE)
+				kwargs["dbs"].append(db)
+				kwargs["nums"].append(letter)
+
+		return self.removeBlanks(pd.DataFrame({
+				"comment_text" : kwargs["texts"],
+				"parent_code" : kwargs["codes"],
+				"original_text" : kwargs["o_text"],
+				"database_name" : kwargs["dbs"],
+				"letter_num" : kwargs["nums"]
+			})).drop_duplicates(subset="comment_text", keep="first")
+
+	def replaceText(self, text):
+		for k,v in TEXT_REPLACEMENT.items():
+			text = text.replace(k,v)
+		return text
 
 	def assignBlanks(self, coded_data, letter_data):
+		letter_data["letter_text"] = letter_data["letter_text"].map(self.replaceText)
+		letter_data = self.restructureBlanks(letter_data)
 		kwargs = {
 			"texts" : coded_data["comment_text"].tolist(),
-			"code" : coded_data["parent_code"].tolist(),
+			"codes" : coded_data["parent_code"].tolist(),
 			"o_text" : coded_data["original_text"].tolist(),
 			"dbs" : coded_data["database_name"].tolist(),
 			"nums" : coded_data["letter_num"].tolist()
 		}
+		if self.sep == '.':
+			return self.sentencePull(coded_data, letter_data, kwargs)
+		if self.sep == '\n':
+			return self.paragraphPull(coded_data, letter_data, kwargs)
+
+	def encode(self, data):
+		encoder = LabelBinarizer()
+		encoder.fit(data["parent_code"].unique())
+		encoded = encoder.transform(data["parent_code"].to_numpy().reshape(-1,1))
+		cols = sorted([(k,v) for k,v in encoder.get_params().items()], key=lambda x:x[0])
+		ohe_df = pd.DataFrame(encoded, columns=encoder.classes_)
+		return pd.concat([data, ohe_df], axis=1).drop(["parent_code"], axis=1)
